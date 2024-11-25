@@ -170,24 +170,6 @@ void standByMode() {
 
 void flightMode() {
 
-  // if last mode was standby(we JUST were turned onto flight mode), perform a check that the throttle isn't high. This is a safety mechanism
-  // this prevents an accident where the flight mode switch is turned on but the throttle position is high, which would immediately apply heavy throttle to each motor, shooting it into the air.
-  if (lastMode == false)
-  {
-    if (rcThrottle > 0.05)
-    {
-      displayController.showMessage("Throttle is too high\nSet throttle to idle\n!!!!!!!!");
-      motorLF.writeMicroseconds(1000);
-      motorRF.writeMicroseconds(1000);
-      motorLR.writeMicroseconds(1000);
-      motorRR.writeMicroseconds(1000);
-      return;
-    }
-  }
-
-  // set last mode
-  lastMode = true;
-
   // calculate adjusted throttle
   adjustedThrottle = (rcThrottle * throttleRange) + throttleIdle;
 
@@ -303,14 +285,29 @@ void mainLoop()
   // if the switch is in standby mode, then the motors should be off
   switch (IBusServo.readChannel(4))
   {
-  case 1000:
-    standByMode();
+  case 2000:
+    // if last mode was standby(we JUST were turned onto flight mode), perform a check that the throttle isn't high. This is a safety mechanism
+    // this prevents an accident where the flight mode switch is turned on but the throttle position is high, which would immediately apply heavy throttle to each motor, shooting it into the air.
+    if (lastMode == false)
+    {
+      if (rcThrottle > 0.05)
+      {
+        displayController.showMessage("Throttle is too high\nSet throttle to idle\n!!!!!!!!");
+        motorLF.writeMicroseconds(1000);
+        motorRF.writeMicroseconds(1000);
+        motorLR.writeMicroseconds(1000);
+        motorRR.writeMicroseconds(1000);
+        break;
+      }
+    }
+
+    // set last mode
+    lastMode = true;
+    flightMode();
     break;
+  case 1000:
   case 1500:
     standByMode();
-    break;
-  case 2000:
-    flightMode();
     break;
   default:
     standByMode();
